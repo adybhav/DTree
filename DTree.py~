@@ -32,7 +32,6 @@ def outlook_gini(outlook):
         ogini += ((d[i]/14)*(gini_0[i]))
     print ogini
 
-
 with open("golf.csv",'rb') as csvfile:
 	golfReader=csv.reader(csvfile,delimiter=',')
 	for row in golfReader:

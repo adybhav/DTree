@@ -1,10 +1,10 @@
 from __future__ import division
 from copy import deepcopy
 import csv
-
+import numpy as np
 inp = []
 
-def gini_calc(outlook, key, vals):
+def gini_calc(outlook, key, vals,size):
     #vals = ["Rainy", "Sunny", "Overcast"]
     if (len(vals) == 3):
         calc = [[0,0,0] for i in range(0,2)]
@@ -12,7 +12,7 @@ def gini_calc(outlook, key, vals):
         calc = [[0,0] for i in range(0,2)]
     #print outlook
     for i in range(0,len(vals)):
-        for j in range(0,14):
+        for j in range(0,size):
 	    if ((outlook['label'][j] == "Yes") and (outlook[key][j] == vals[i])):
                 calc[0][i] += 1
             elif ((outlook['label'][j] == "No") and (outlook[key][j] == vals[i])):
@@ -25,7 +25,7 @@ def gini_calc(outlook, key, vals):
     #print ginicalc
     ogini = 0.0
     for i in range(0, len(vals)):
-        ogini += ((denom[i]/14)*(ginicalc[i]))
+        ogini += ((denom[i]/size)*(ginicalc[i]))
     print ogini
 
 def samelabel(attr, label, key):
@@ -34,27 +34,33 @@ def samelabel(attr, label, key):
     for i in range(0, len(attr)):
         if (attr[i] == key):
             endVal = label[i]
+	    if endVal!=initVal:
+		break
     if (initVal == endVal):
         print "This is a leaf node " + key + " and the outcome is " + initVal
     return (initVal == endVal)
 
 def majorityrules(attr, label, labelname, key):
+    str=""
     arr = [0, 0]
     for i in range(0, len(attr)):
-        if attr[i] == key:
+	if attr[i] == key:
             for j in range(0, len(labelname)):
                 if (label[i] == labelname[j]):
                     arr[j] += 1
-    print "The leaf " + key + " has a value " + labelname.index(max(arr))
+    if(arr[0]>=arr[1]):
+	str="No"
+    else:
+	str="Yes"
+    print "The leaf " + key + " has a value " + str
 
-def gini(ginidict, attributes, attrnames):
+def gini(ginidict, attributes, attrnames,size):
     cgini = ginidict
     cattr = attributes
     cnames = attrnames
     newattr = {}
     for key in cnames:
-        newattr[key] = gini_calc(cgini, key, cattr[key])
-	print key
+        newattr[key] = gini_calc(cgini, key, cattr[key],size)
     minkey = ""
     minval = 0
     for key in newattr:
@@ -70,25 +76,36 @@ def gini(ginidict, attributes, attrnames):
         recurattr = deepcopy(cattr)
         recurnname = deepcopy(cnames)
         removelist = []
-	print recurdict[minkey]
-	print len(cgini)
-        if (len(cgini) == 2):
-            majorityrules(recurdict[minkey], recurdict['label'], recurattr['label'], i)
-            return
+	
+	#if(sset(recurdict[minkey], recurdict['label'], recurattr['label'], i):)
 
         if samelabel(recurdict[minkey], recurdict['label'], i) == True:
             return
+	
+        else:
+	   majorityrules(recurdict[minkey], recurdict['label'], recurattr['label'], i)
+         
 
+	#print recurdict[minkey]
         for j in range(0, len(recurdict[minkey])):
             if (recurdict[minkey][j] == i):
                 removelist.append(j)
-        #for key in recurdict:
-         #   recurdict[key] = [v for l, v in enumerate(recurdict[key]) if l not in removelist]
-        del recurdict[minkey]
+	
+        for key in recurdict:
+            recurdict[key] = [v for l, v in enumerate(recurdict[key]) if l not in removelist]
+		
+	del recurdict[minkey]
         del recurattr[minkey]
-        recurnname.remove(minkey)
-	#print recurdict
-        gini(recurdict, recurattr, recurnname)
+	size=len(recurdict[key])        
+	print minkey	        
+	recurnname.remove(minkey)
+	gini(recurdict, recurattr, recurnname,size)
+
+
+#def sset(attribute, class_label, classname, i):
+		
+
+
 
 with open("golf.csv", 'rb') as csvfile:
     golfReader = csv.reader(csvfile, delimiter=',')
@@ -110,5 +127,5 @@ attr["windy"] = ["True", "False"]
 attr["label"] = ["Yes", "No"]
 
 attrnames = ["outlook", "humid", "temp", "windy"]
-gini(ddict, attr, attrnames)
+gini(ddict, attr, attrnames,14)
 
